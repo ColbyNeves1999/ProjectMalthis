@@ -80,7 +80,15 @@ services:
               count: all
               capabilities: ["gpu"]
 ###########################################
-
+##########Vite#############################
+  frontend:
+    build:
+      context: ./frontend
+    environment:
+      NODE_ENV: development
+    ports:
+      - 5173:5173
+###########################################
 volumes:
   postgres_data:
   ollama_data:
