@@ -16,6 +16,9 @@ services:
       - ./backend:/app
     env_file:
       - .env
+    depends_on:
+      db:
+        condition: service_healthy
 ###########################################
 ##########PostgreSQL####################### 
   db:
