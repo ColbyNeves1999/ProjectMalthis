@@ -1,25 +1,12 @@
-import uuid
-
 from collections.abc import AsyncGenerator
-from datetime import datetime, timezone
 from fastapi import Depends
-from fastapi_users.db import SQLAlchemyBaseUserTableUUID, SQLAlchemyUserDatabase
+from fastapi_users.db import SQLAlchemyUserDatabase
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy import Column, String, DateTime, ForeignKey, Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID
+from core.models import Base, User
 
 import os
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
-
-# Creates the base table that all tables in the database will inherit from
-class Base(DeclarativeBase):
-    pass
-
-# The User table, built on FastAPI Users' default fields (email, password, etc.)
-class User(SQLAlchemyBaseUserTableUUID, Base):
-    pass
 
 # Creates the database engine and session factory for Project Malthis
 engine = create_async_engine(DATABASE_URL)

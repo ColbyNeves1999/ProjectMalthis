@@ -1,5 +1,5 @@
 from fastapi import FastAPI, APIRouter, Depends
-from routers import usersRouters
+#from routers import usersRouters
 from core.database import User, create_db_and_tables
 from core.users import UserCreate, UserRead, UserUpdate
 from routers.usersRouters import auth_backend, current_active_user, fastapi_users
