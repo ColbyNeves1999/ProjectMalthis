@@ -1,26 +1,40 @@
-from typing import Annotated
+import uuid
+
+from collections.abc import AsyncGenerator
+from datetime import datetime, timezone
+from fastapi import Depends
+from fastapi_users.db import SQLAlchemyBaseUserTableUUID, SQLAlchemyUserDatabase
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy import Column, String, DateTime, ForeignKey, Mapped, mapped_column, relationship
+from sqlalchemy.dialects.postgresql import UUID
 
 import os
 
-from fastapi import Depends
-from sqlmodel import Field, Session, SQLModel, create_engine, select
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
+# Creates the base table that all tables in the database will inherit from
+class Base(DeclarativeBase):
+    pass
 
-class Hero(SQLModel, table=True):
-    id: int | None = Field(default=None, primary_key=True)
-    name: str = Field(index=True)
-    age: int | None = Field(default=None, index=True)
-    secret_name: str
+# The User table, built on FastAPI Users' default fields (email, password, etc.)
+class User(SQLAlchemyBaseUserTableUUID, Base):
+    pass
 
-postgre_url = os.environ.get("DATABASE_URL")
-engine = create_engine(postgre_url)
+# Creates the database engine and session factory for Project Malthis
+engine = create_async_engine(DATABASE_URL)
+async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
 
-def create_db_and_tables():
-    SQLModel.metadata.create_all(engine)
+# Creates the database and tables for Project Malthis.
+async def create_db_and_tables():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
-def get_session():
-    with Session(engine) as session:
+# Opens a database session for each request and closes it when done.
+async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
+    async with async_session_maker() as session:
         yield session
 
-
-SessionDep = Annotated[Session, Depends(get_session)]
+# Provides FastAPI Users with access to the User table for auth operations (login, register, etc.)
+async def get_user_db(session: AsyncSession = Depends(get_async_session)):
+    yield SQLAlchemyUserDatabase(session, User)

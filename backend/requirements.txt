@@ -1,8 +1,10 @@
 fastapi
 uvicorn[standard]
+fastapi-users[sqlalchemy]
+aiosqlite
 celery
 redis
-psycopg2-binary
+asyncpg
 sqlalchemy
 python-dotenv
 sqlmodel
