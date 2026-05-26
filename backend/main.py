@@ -4,6 +4,7 @@ from core.database import User, create_db_and_tables
 from core.users import UserCreate, UserRead, UserUpdate
 from routers.usersRouters import auth_backend, current_active_user, fastapi_users
 from contextlib import asynccontextmanager
+from routers import campaignRouters, campaignMemberRouters
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -12,6 +13,9 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(title="Project Malthis", lifespan=lifespan)
+
+app.include_router(campaignRouters.router)
+app.include_router(campaignMemberRouters.router)
 
 @app.get("/")
 def root():
@@ -52,8 +56,3 @@ app.include_router(
 @app.get("/authenticated-route")
 async def authenticated_route(user: User = Depends(current_active_user)):
     return {"message": f"Hello {user.email}!"}
-
-##Remove when verified other method in asyn def lifespan is working
-#@app.on_event("startup")
-#def on_startup():
-#    create_db_and_tables()

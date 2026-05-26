@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from collections.abc import AsyncGenerator
 from fastapi import Depends
 from fastapi_users.db import SQLAlchemyUserDatabase
@@ -25,3 +27,6 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
 # Provides FastAPI Users with access to the User table for auth operations (login, register, etc.)
 async def get_user_db(session: AsyncSession = Depends(get_async_session)):
     yield SQLAlchemyUserDatabase(session, User)
+
+# Generates a type that is used to inject the database session
+SessionDep = Annotated[AsyncSession, Depends(get_async_session)]
