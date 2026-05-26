@@ -14,6 +14,9 @@ from core.database import User, get_user_db
 
 SECRET = os.environ.get("SECRET_KEY")
 
+#################################################################################################
+#Most of the logic provided by FastAPI Users, this class is where we can add custom logic for user management.
+
 # Manages the handler for all user related operations (register, login, forgot password, etc.)
 class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
     reset_password_token_secret = SECRET
@@ -61,3 +64,4 @@ fastapi_users = FastAPIUsers[User, uuid.UUID](get_user_manager, [auth_backend])
 
 # The dependency that will be called by other functions needing to access the currently logged in user.
 current_active_user = fastapi_users.current_user(active=True)
+#################################################################################################

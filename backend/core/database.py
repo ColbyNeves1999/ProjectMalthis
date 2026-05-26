@@ -10,6 +10,9 @@ import os
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
+#################################################################################################
+# Logic provided by SQLAlchemy and FastAPI Users documentation.
+
 # Creates the database engine and session factory for Project Malthis
 engine = create_async_engine(DATABASE_URL)
 async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
@@ -30,3 +33,4 @@ async def get_user_db(session: AsyncSession = Depends(get_async_session)):
 
 # Generates a type that is used to inject the database session
 SessionDep = Annotated[AsyncSession, Depends(get_async_session)]
+#################################################################################################

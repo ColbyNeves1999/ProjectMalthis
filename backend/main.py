@@ -1,21 +1,20 @@
 from fastapi import FastAPI, APIRouter, Depends
-#from routers import usersRouters
 from core.database import User, create_db_and_tables
 from core.users import UserCreate, UserRead, UserUpdate
 from routers.usersRouters import auth_backend, current_active_user, fastapi_users
 from contextlib import asynccontextmanager
 from routers import campaignRouters, campaignMemberRouters
 
+# Provided by FastAPI Documentation: https://fastapi.tiangolo.com/advanced/events/#lifespan-events
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+
     # Not needed if you setup a migration system like Alembic
     await create_db_and_tables()
     yield
 
+# Create the FastAPI app and include the lifespan function
 app = FastAPI(title="Project Malthis", lifespan=lifespan)
-
-app.include_router(campaignRouters.router)
-app.include_router(campaignMemberRouters.router)
 
 @app.get("/")
 def root():
@@ -25,6 +24,13 @@ def root():
 def health():
     return {"status": "ok"}
 
+# Router inclusions from the routers directory
+app.include_router(campaignRouters.router)
+app.include_router(campaignMemberRouters.router)
+
+#################################################################################################
+# Authentication and User Management Routes provided by FastAPI Users' Documentation: 
+# https://fastapi-users.github.io/fastapi-users/latest/
 app.include_router(
     fastapi_users.get_auth_router(auth_backend), prefix="/auth/jwt", tags=["auth"]
 )
@@ -52,6 +58,7 @@ app.include_router(
     prefix="/users",
     tags=["users"],
 )
+#################################################################################################
 
 @app.get("/authenticated-route")
 async def authenticated_route(user: User = Depends(current_active_user)):
