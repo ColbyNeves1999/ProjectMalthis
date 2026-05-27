@@ -6,7 +6,7 @@ from core.campaignMember import CampaignMemberCreate, CampaignMemberRead, create
 from core.campaign import CampaignRead
 from routers.usersRouters import current_active_user
 from fastapi import HTTPException, APIRouter, Depends
-from sqlalchemy import select
+from sqlalchemy import select, delete, update
 
 router = APIRouter()
 
@@ -18,9 +18,26 @@ async def create_campaign_link(campaign_id: uuid.UUID, campaign_member: Campaign
     
     return await create_member(session, current_user.id, campaign_id, campaign_member.role)
 
-@router.get("/campaigns/userAssociatedCampaigns/")
+# Endpoint that lists all campaigns a user is associated with
+@router.get("/campaign_members/userAssociatedCampaigns/")
 async def list_associated_campaigns(session: SessionDep, current_user: User = Depends(current_active_user)) -> list[CampaignMemberRead]:
     
     stmt = select(CampaignMember).where(CampaignMember.user_id == current_user.id)
     result = await session.execute(stmt)
     return result.scalars().all()
+
+# Endpoint that lists all users a campaign is associated with
+@router.get("/campaign_members/campaignAssociatedUsers/{campaign_id}/")
+async def list_associated_users(campaign_id: uuid.UUID, session: SessionDep, current_user: User = Depends(current_active_user)) -> list[CampaignMemberRead]:
+    
+    stmt = select(CampaignMember).where(CampaignMember.campaign_id == campaign_id)
+    result = await session.execute(stmt)
+    return result.scalars().all()
+
+# Endpoint that deletes a campaign connection between a user and a campaign
+@router.delete("/campaign_members/delete/{campaign_id}/")
+async def delete_campaign_link(campaign_id: uuid.UUID, session: SessionDep, current_user: User = Depends(current_active_user)) -> None:
+    
+    stmt = delete(CampaignMember).where(CampaignMember.user_id == current_user.id, CampaignMember.campaign_id == campaign_id)
+    await session.execute(stmt)
+    await session.commit()

@@ -1,9 +1,10 @@
 import uuid
+import enum
 
 from datetime import datetime, timezone
 from fastapi_users.db import SQLAlchemyBaseUserTableUUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy import String, DateTime, ForeignKey
+from sqlalchemy import String, DateTime, ForeignKey, Enum
 from sqlalchemy.dialects.postgresql import UUID
 
 # Creates the base table that all tables in the database will inherit from
@@ -13,6 +14,11 @@ class Base(DeclarativeBase):
 # The User table, built on FastAPI Users' default fields (email, password, etc.)
 class User(SQLAlchemyBaseUserTableUUID, Base):
     pass
+
+class roleEnum(enum.Enum):
+    Dungeon_Master = "Dungeon Master"
+    Player = "Player"
+    Spectator = "Spectator"
 
 # The Campaign table, which will hold information about each campaign created in the app.
 class Campaign(Base):
@@ -28,4 +34,4 @@ class CampaignMember(Base):
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("user.id"), nullable=False)
     campaign_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("campaigns.id"), nullable=False)
-    role: Mapped[str] = mapped_column(String, nullable=False)
+    role: Mapped[roleEnum] = mapped_column(Enum(roleEnum), nullable=False)
