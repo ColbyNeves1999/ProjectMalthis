@@ -2,13 +2,15 @@ import uuid
 
 from core.models import Campaign, User, roleEnum
 from core.database import SessionDep
-from core.campaign import CampaignCreate, CampaignRead
+from core.campaign import CampaignCreate, CampaignRead, CampaignUpdate, check_campaign_ownership, change_campaign_data
 from routers.usersRouters import current_active_user
-from core.campaignMember import check_campaign_membership, create_member, delete_campaign_links, check_campaign_ownership
+from core.campaignMember import check_campaign_membership, create_member, delete_campaign_links
 from fastapi import HTTPException, APIRouter, Depends
-from sqlalchemy import select, delete, update
+from sqlalchemy import select, delete
 
 router = APIRouter()
+#################################################################################################
+# Post Endpoints
 
 # Endpoint to create a new campaign
 # user_id and role are passed in the request body via FastAPI built in functions
@@ -21,8 +23,11 @@ async def create_campaigns(campaign: CampaignCreate, session: SessionDep, curren
     session.add(db_campaign)
     await session.commit()
     await session.refresh(db_campaign)
-    await create_member(session, current_user.id, db_campaign.id, roleEnum.Dungeon_Master.value)
+    await create_member(session, current_user.id, db_campaign.id, roleEnum.Dungeon_Master)
     return db_campaign
+
+#################################################################################################
+# Get Endpoints
 
 # Endpoint to list all campaigns a user owns
 @router.get("/campaigns/userOwnedCampaigns/")
@@ -35,26 +40,31 @@ async def list_user_owned_campaigns(session: SessionDep, current_user: User = De
 @router.get("/campaigns/specificCampaign/{campaign_id}/")
 async def get_campaign(session: SessionDep, current_user: User = Depends(current_active_user), campaign_id: uuid.UUID = None) -> CampaignRead:
 
-    is_member = await check_campaign_membership(session, current_user.id, campaign_id)
+    await check_campaign_membership(session, current_user.id, campaign_id)
 
-    if is_member:
-        stmt = select(Campaign).where(Campaign.id == campaign_id)
-        result = await session.execute(stmt)
-        return result.scalars().first()
-    else:
-        raise HTTPException(status_code=403, detail="User is not a member of this campaign.")
-    
+    stmt = select(Campaign).where(Campaign.id == campaign_id)
+    result = await session.execute(stmt)
+    return result.scalars().first()
+
+#################################################################################################
+# Patch Endpoints
+
+# Endpoint to change the name of a campaign the user owns
+@router.patch("/campaigns/ChangeCampaignData/{campaign_id}/")
+async def change_campaign_data_endpoint(campaign_id: uuid.UUID, session: SessionDep, campaign_data: CampaignUpdate, current_user: User = Depends(current_active_user)) -> CampaignRead:
+
+        return await change_campaign_data(session, current_user.id, campaign_id, campaign_data)
+
+#################################################################################################
+# Delete Endpoints
+
 # Endpoint to delete a campaign the user owns
 @router.delete("/campaigns/DeleteCampaign/{campaign_id}/")
 async def delete_campaign(campaign_id: uuid.UUID, session: SessionDep, current_user: User = Depends(current_active_user)) -> None:
 
-    temp = await check_campaign_ownership(session, current_user.id, campaign_id)
+    await check_campaign_ownership(session, current_user.id, campaign_id)
 
-    if temp is False:
-        raise HTTPException(status_code=403, detail="User is not the owner of this campaign.")
-    else:
-        await delete_campaign_links(session, campaign_id)
-
-        stmt = delete(Campaign).where(Campaign.id == campaign_id, Campaign.owner_id == current_user.id)
-        await session.execute(stmt)
-        await session.commit()
+    await delete_campaign_links(session, campaign_id)
+    stmt = delete(Campaign).where(Campaign.id == campaign_id, Campaign.owner_id == current_user.id)
+    await session.execute(stmt)
+    await session.commit()
