@@ -3,7 +3,7 @@ from core.database import User, create_db_and_tables
 from core.users import UserCreate, UserRead, UserUpdate
 from routers.usersRouters import auth_backend, current_active_user, fastapi_users
 from contextlib import asynccontextmanager
-from routers import campaignRouters, campaignMemberRouters
+from routers import campaignRouters, campaignMemberRouters, campaignInviteRouters
 
 # Provided by FastAPI Documentation: https://fastapi.tiangolo.com/advanced/events/#lifespan-events
 @asynccontextmanager
@@ -27,6 +27,7 @@ def health():
 # Router inclusions from the routers directory
 app.include_router(campaignRouters.router)
 app.include_router(campaignMemberRouters.router)
+app.include_router(campaignInviteRouters.router)
 
 #################################################################################################
 # Authentication and User Management Routes provided by FastAPI Users' Documentation: 

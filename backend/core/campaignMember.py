@@ -64,7 +64,7 @@ async def delete_campaign_links(session: SessionDep, campaign_id: uuid.UUID) -> 
 async def change_role_data(session: SessionDep, target_id: uuid.UUID, user_id: uuid.UUID, campaign_id: uuid.UUID, role: CampaignMemberUpdate) -> CampaignMemberRead:
 
     await check_campaign_ownership(session, user_id, campaign_id)
-    temp = await check_campaign_membership(session, target_id, campaign_id)
+    await check_campaign_membership(session, target_id, campaign_id)
     update_data = role.model_dump(exclude_unset=True)
     stmt = update(CampaignMember).where(CampaignMember.user_id == target_id, CampaignMember.campaign_id == campaign_id).values(**update_data)
     await session.execute(stmt)
