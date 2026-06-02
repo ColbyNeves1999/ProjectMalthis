@@ -8,3 +8,5 @@ asyncpg
 sqlalchemy
 python-dotenv
 sqlmodel
+openai_whisper
+aiofiles

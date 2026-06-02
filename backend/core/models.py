@@ -27,6 +27,13 @@ class requestStatusEnum(enum.Enum):
     Approved = "Approved"
     Rejected = "Rejected"
 
+# Enum for the different statuses a campaign session job can have
+class jobStatusEnum(enum.Enum):
+    Pending = "Pending"
+    Processing = "Processing"
+    Completed = "Completed"
+    Failed = "Failed"
+
 # Campaign Schema
 class Campaign(Base):
     __tablename__ = "campaigns"
@@ -64,3 +71,16 @@ class CampaignJoinRequest(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
 
+# Campaign Session Schema
+class CampaignSession(Base):
+    __tablename__ = "campaign_sessions"
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("user.id"), nullable=False)
+    campaign_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("campaigns.id"), nullable=False)
+    session_name: Mapped[str] = mapped_column(String, nullable=False)
+    audio_path: Mapped[str | None] = mapped_column(String, nullable=True)
+    job_status: Mapped[jobStatusEnum] = mapped_column(Enum(jobStatusEnum), nullable=False, default=jobStatusEnum.Pending)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    summary: Mapped[str | None] = mapped_column(String, nullable=True)
+    transcript: Mapped[str] = mapped_column(String, nullable=True)
+    session_number: Mapped[int] = mapped_column(nullable=False, default=0)

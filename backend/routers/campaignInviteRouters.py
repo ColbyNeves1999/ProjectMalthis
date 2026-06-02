@@ -1,6 +1,6 @@
 import uuid
 
-from core.models import User, requestStatusEnum
+from core.models import User
 from core.campaignInvite import CampaignJoinRequestToken, CampaignJoinRequestRead, CampaignJoinRequestUpdate, CampaignLinkRead, CampaignLinkUpdate, create_link, delete_invite_link, update_invite_link, get_campaign_invite, create_join_request, get_join_requests, approve_join_request, user_get_join_requests, get_specific_join_request
 from core.database import SessionDep
 from routers.usersRouters import current_active_user

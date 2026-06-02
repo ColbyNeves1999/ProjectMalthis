@@ -5,7 +5,7 @@ from core.database import SessionDep
 from core.campaign import CampaignCreate, CampaignRead, CampaignUpdate, check_campaign_ownership, change_campaign_data
 from routers.usersRouters import current_active_user
 from core.campaignMember import check_campaign_membership, create_member, delete_campaign_links
-from fastapi import HTTPException, APIRouter, Depends
+from fastapi import APIRouter, Depends
 from sqlalchemy import select, delete
 
 router = APIRouter()

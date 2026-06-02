@@ -3,10 +3,9 @@ import uuid
 from core.models import User, CampaignMember
 from core.database import SessionDep
 from core.campaignMember import CampaignMemberCreate, CampaignMemberRead, CampaignMemberUpdate, change_role_data, create_member
-from core.campaign import CampaignRead
 from routers.usersRouters import current_active_user
-from fastapi import HTTPException, APIRouter, Depends
-from sqlalchemy import select, delete, update
+from fastapi import APIRouter, Depends
+from sqlalchemy import select, delete
 
 router = APIRouter()
 
