@@ -6,9 +6,10 @@ from core.campaign import check_campaign_ownership
 from core.database import SessionDep
 from core.models import jobStatusEnum, CampaignSession
 from pydantic import BaseModel
-from sqlalchemy import select, delete, update
-from fastapi import HTTPException, File, UploadFile
-from datetime import datetime, timezone
+from sqlalchemy import select, delete
+from fastapi import HTTPException, UploadFile
+from datetime import datetime
+from worker import process_audio_task
 
 # Handles the campaign session creation process.
 class CampaignSessionCreate(BaseModel):
@@ -40,7 +41,6 @@ class CampaignSessionUpdate(BaseModel):
 # Acceptable file types for session uploads, as assumed by Whisper AI.
 ALLOWED_FILE_TYPES = {"audio/mp3", "audio/wav", "audio/flac", "audio/m4a", "audio/ogg", "audio/opus", "audio/webm", "audio/mpeg"}
 
-
 #################################################################################################
 # Session Functions
 
@@ -65,6 +65,7 @@ async def create_session(session: SessionDep, user_id: uuid.UUID, campaign_id: u
     await session.commit()
     await session.refresh(db_campaign_session)
 
+    # Save the uploaded file to the server with a unique name based on the session ID, and update the session with the file path.
     original_filename = os.path.splitext(file.filename)[1]
     audio_filename = f"{db_campaign_session.id}{original_filename}"
     db_campaign_session.audio_path = f"/app/audio/{audio_filename}"
@@ -76,11 +77,12 @@ async def create_session(session: SessionDep, user_id: uuid.UUID, campaign_id: u
     await session.refresh(db_campaign_session)
 
     # Celery task to process the audio file and update the session with the transcript and summary.
+    process_audio_task.delay(str(db_campaign_session.id))
 
     return db_campaign_session
 
 # Gets a session for a campaign
-async def get_one_session(session: SessionDep, user_id: uuid.UUID, campaign_id: uuid.UUID, session_id: uuid.UUID,) -> CampaignSessionRead:
+async def get_one_session(session: SessionDep, user_id: uuid.UUID, campaign_id: uuid.UUID, session_id: uuid.UUID) -> CampaignSessionRead:
     
     await check_campaign_ownership(session, user_id, campaign_id)
 
@@ -122,9 +124,6 @@ async def update_session(session: SessionDep, user_id: uuid.UUID, campaign_id: u
 
     updating_session = await get_one_session(session, user_id, campaign_id, session_id)
 
-    if not updating_session:
-        raise HTTPException(status_code=404, detail="Session not found")
-
     if session_update.session_name is not None:
         updating_session.session_name = session_update.session_name
 
@@ -136,3 +135,24 @@ async def update_session(session: SessionDep, user_id: uuid.UUID, campaign_id: u
     await session.refresh(updating_session)
 
     return updating_session
+
+# Deletes a session for a campaign
+async def delete_session(session: SessionDep, user_id: uuid.UUID, campaign_id: uuid.UUID, session_id: uuid.UUID) -> None:
+    
+    await check_campaign_ownership(session, user_id, campaign_id)
+
+    temp = await get_one_session(session, user_id, campaign_id, session_id)
+    
+    if temp is not None:
+        try:
+            os.remove(temp.audio_path)
+        except Exception as e:
+            raise HTTPException(status_code=404, detail="An error occurred while trying to delete the session's audio file.")
+
+    stmt = delete(CampaignSession).where(CampaignSession.campaign_id == campaign_id, CampaignSession.id == session_id)
+    result = await session.execute(stmt)
+
+    if result.rowcount == 0:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    await session.commit()

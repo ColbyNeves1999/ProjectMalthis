@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import select, delete, update
+from sqlalchemy import select, update
 from core.models import Campaign
 from core.database import SessionDep
 from pydantic import BaseModel

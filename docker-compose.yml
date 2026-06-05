@@ -66,9 +66,17 @@ services:
     depends_on:
       - redis
       - db
+      - ollama
     volumes:
       - ./backend:/app
       - audio_files:/app/audio
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
 ###########################################
 ##########Ollama###########################
   ollama:

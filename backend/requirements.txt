@@ -7,6 +7,13 @@ redis
 asyncpg
 sqlalchemy
 python-dotenv
+python-multipart
 sqlmodel
 openai_whisper
 aiofiles
+aiohttp
+ollama
+httpx
+pillow
+reportlab
+markdown
