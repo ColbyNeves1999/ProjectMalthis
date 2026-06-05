@@ -31,6 +31,7 @@ class requestStatusEnum(enum.Enum):
 class jobStatusEnum(enum.Enum):
     Pending = "Pending"
     Processing = "Processing"
+    Needs_Review = "Needs Review"
     Completed = "Completed"
     Failed = "Failed"
 

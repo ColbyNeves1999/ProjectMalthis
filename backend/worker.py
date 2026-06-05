@@ -49,7 +49,7 @@ async def process_audio_file(session_id: str):
             #entities = await ollama.llm_entity_extraction(transcription)
 
             campaign_session_data.summary = summary
-            campaign_session_data.job_status = "Completed"
+            campaign_session_data.job_status = "Needs Review"
 
             session.add(campaign_session_data)
             await session.commit()
