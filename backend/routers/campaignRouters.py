@@ -17,6 +17,7 @@ router = APIRouter()
 @router.post("/campaigns/")
 async def create_campaigns(campaign: CampaignCreate, session: SessionDep, current_user: User = Depends(current_active_user)) -> CampaignRead:
     
+    # TODO: Come back and move this code to seperate function that the endpoint calls, rather than performing at the endpoint itself.
     # .model_dump() is a Pydantic function that translates a Pydantic model to SQLAlchemy model
     db_campaign = Campaign(**campaign.model_dump())
     db_campaign.owner_id = current_user.id
@@ -32,6 +33,7 @@ async def create_campaigns(campaign: CampaignCreate, session: SessionDep, curren
 # Endpoint to list all campaigns a user owns
 @router.get("/campaigns/userOwnedCampaigns/")
 async def list_user_owned_campaigns(session: SessionDep, current_user: User = Depends(current_active_user)) -> list[CampaignRead]:
+    # TODO: Come back and move this code to seperate function that the endpoint calls, rather than performing at the endpoint itself.
     stmt = select(Campaign).where(Campaign.owner_id == current_user.id)
     result = await session.execute(stmt)
     return result.scalars().all()
@@ -39,7 +41,7 @@ async def list_user_owned_campaigns(session: SessionDep, current_user: User = De
 # Endpoint to get information about a specific campaign
 @router.get("/campaigns/specificCampaign/{campaign_id}/")
 async def get_campaign(session: SessionDep, current_user: User = Depends(current_active_user), campaign_id: uuid.UUID = None) -> CampaignRead:
-
+    #   TODO: Come back and move this code to seperate function that the endpoint calls, rather than performing at the endpoint itself.
     await check_campaign_membership(session, current_user.id, campaign_id)
 
     stmt = select(Campaign).where(Campaign.id == campaign_id)
@@ -62,6 +64,7 @@ async def change_campaign_data_endpoint(campaign_id: uuid.UUID, session: Session
 @router.delete("/campaigns/DeleteCampaign/{campaign_id}/")
 async def delete_campaign(campaign_id: uuid.UUID, session: SessionDep, current_user: User = Depends(current_active_user)) -> None:
 
+    # TODO: Come back and move this code to seperate function that the endpoint calls, rather than performing at the endpoint itself.
     await check_campaign_ownership(session, current_user.id, campaign_id)
 
     await delete_campaign_links(session, campaign_id)

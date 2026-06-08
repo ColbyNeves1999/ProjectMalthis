@@ -2,6 +2,7 @@ import os
 import json
 
 from providers.llm.base import LLMProvider
+from backend.core.entity import g
 from ollama import AsyncClient
 from fastapi import HTTPException
 
@@ -22,7 +23,6 @@ class OllamaProvider(LLMProvider):
             response += part['message']['content']
         return response
 
-
     # Given a transcription of the session, extract all named entities and objects (people, places, organizations, items) from the transcript.
     # Returns that list of entities.
     async def llm_entity_extraction(self, transcription: str) -> list[dict]:
@@ -34,3 +34,11 @@ class OllamaProvider(LLMProvider):
             return json.loads(response)
         except json.JSONDecodeError:
             raise HTTPException(status_code=500, detail="Failed to parse entity extraction response as JSON.")
+        
+    # Takes a given entity data and a new summary of the character and requests Ollam to create a new summary for the character.
+    async def llm_entity_merging(self, entity_data: str, new_summary:str) -> str:
+        response = ""
+        async for part in await AsyncClient(host=self.model_url).chat(model=self.model_size, messages=[{'role': 'user', 'content': f"I am providing you data on an existing entity from a DND campaign database and I am also providing you with a new summary of the character's action in the most recent session. Create a new summary using both of these sets of data. This new summary should be all encompassing of the old data and the new data. No other text.\n\n Existing entity data: {entity_data}\n\n New entity data: {new_summary}"}], stream=True):
+            response += part['message']['content']
+        return response
+    

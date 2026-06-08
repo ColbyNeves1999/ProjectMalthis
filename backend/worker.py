@@ -4,8 +4,9 @@ import uuid
 from providers.llm.llmFile import OllamaProvider
 from providers.transcription.transcriptionFile import WhisperTranscriptionProvider
 from celery import Celery
-from core.models import CampaignSession
-from sqlalchemy import select, delete, update
+from core.models import CampaignSession, Entities
+from core.entity import EntityCreate
+from sqlalchemy import select
 from core.database import async_session_maker
 
 # Celery configuration for the worker.
@@ -63,8 +64,44 @@ async def process_audio_file(session_id: str):
             await session.commit()
             raise e
 
+# This function does a merge of an entity and incoming data.
+async def merge_with_existing_entity(entity_id: str, merge_data: EntityCreate):
+
+    # Create an asynchronous session with the database to fetch and update the entity data.
+    async with async_session_maker() as session:
+
+        # Fetch the entity data from the database using the provided entity ID.
+        stmt = select(Entities).where(Entities.id == uuid.UUID(entity_id))
+        result = await session.execute(stmt)
+        entity_data =  result.scalars().first()
+
+        # Requests Ollama to merge the existing entity description with the new data.
+        try:
+
+            # Use the Ollama LLM to merge and generate data for the existing character.
+            ollama = OllamaProvider()
+            summary = await ollama.llm_entity_merging(entity_data.description, merge_data)
+
+            entity_data.description = summary
+
+            session.add(entity_data)
+            await session.commit()
+            await session.refresh(entity_data)
+
+            return entity_data
+    
+        # If any exception occurs during the merging of the entity data, raise the exception.
+        except Exception as e:
+            await session.commit()
+            raise e
+
 # Celery task that calls the process_audio_file function with the provided session ID.
 @celery_app.task
 def process_audio_task(session_id: uuid.UUID):
     asyncio.run(process_audio_file(session_id))
+
+# Celery task that calls the process_audio_file function with the provided session ID.
+@celery_app.task
+def process_entity_merger(entity_id: str, merge_data: str):
+    asyncio.run(merge_with_existing_entity(entity_id, merge_data))
     

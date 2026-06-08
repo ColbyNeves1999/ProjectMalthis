@@ -63,6 +63,7 @@ async def delete_campaign_links(session: SessionDep, campaign_id: uuid.UUID) -> 
 # Change role of a user in a campaign
 async def change_role_data(session: SessionDep, target_id: uuid.UUID, user_id: uuid.UUID, campaign_id: uuid.UUID, role: CampaignMemberUpdate) -> CampaignMemberRead:
 
+    # TODO: Investigate why I did both checks
     await check_campaign_ownership(session, user_id, campaign_id)
     await check_campaign_membership(session, target_id, campaign_id)
     update_data = role.model_dump(exclude_unset=True)
