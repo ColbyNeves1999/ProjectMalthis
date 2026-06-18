@@ -23,7 +23,7 @@ class EntityRead(BaseModel):
     campaign_id: uuid.UUID
     entity_class: entityClassEnum
     first_seen: uuid.UUID
-    aliases: list[str | None]
+    aliases: list[str] | None = None
     notes: str | None
     created_at: datetime
     
@@ -81,7 +81,7 @@ async def get_one_entity_by_id(session: SessionDep, user_id: uuid.UUID, campaign
 # API FACING - Returns EntityRead Pydantic schema for use by endpoints sending data to the frontend.
 # Performs an ownership check before returning data.
 # Use this in router endpoints when returning entity data to the user.
-async def get_one_entity_by_name(session: SessionDep, user_id: uuid.UUID, campaign_id: uuid.UUID, entity_name: str) -> EntityRead:
+async def get_one_entity_by_name(session: SessionDep, user_id: uuid.UUID, campaign_id: uuid.UUID, entity_name: str) -> EntityRead | None:
     
     # TODO: Determine efficient way to seperate Entities so members can see public entities, but not hidden by DM entities
     await check_campaign_ownership(session, user_id, campaign_id)
@@ -90,8 +90,8 @@ async def get_one_entity_by_name(session: SessionDep, user_id: uuid.UUID, campai
     result = await session.execute(stmt)
     db_entity =  result.scalars().first()
 
-    if not db_entity:
-        raise HTTPException(status_code=404, detail="Entity not found")
+    #if not db_entity:
+    #    raise HTTPException(status_code=404, detail="Entity not found")
 
     return db_entity
 

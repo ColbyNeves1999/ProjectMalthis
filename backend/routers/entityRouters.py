@@ -1,7 +1,7 @@
 import uuid
 
 from core.models import User
-from core.entity import EntityCreate, EntityRead, EntityUpdate, create_entity, get_one_entity_by_id, get_one_entity_by_name, get_all_entities, update_entity, delete_entity
+from core.entity import EntityCreate, EntityRead, EntityUpdate, EntityCreateResponse, create_entity, get_one_entity_by_id, get_one_entity_by_name, get_all_entities, update_entity, delete_entity
 from core.database import SessionDep
 from core.campaign import check_campaign_ownership
 from routers.usersRouters import current_active_user
@@ -15,8 +15,8 @@ router = APIRouter()
 
 # Endpoint to create a new entity
 # user_id and role are passed in the request body via FastAPI built in functions
-@router.post("/campaigns/{campaign_id}/entities/{session_id}")
-async def create_entity_endpoint(session: SessionDep, entityData: EntityCreate, campaign_id: uuid.UUID, session_id: uuid.UUID, current_user: User = Depends(current_active_user)) -> EntityRead:
+@router.post("/campaigns/{campaign_id}/entities/{session_id}/")
+async def create_entity_endpoint(session: SessionDep, entityData: EntityCreate, campaign_id: uuid.UUID, session_id: uuid.UUID, current_user: User = Depends(current_active_user)) -> EntityCreateResponse:
     
     return await create_entity(session, entityData, campaign_id, current_user.id, session_id)
 

@@ -1,8 +1,8 @@
 import os
 import json
+import re
 
 from providers.llm.base import LLMProvider
-from backend.core.entity import g
 from ollama import AsyncClient
 from fastapi import HTTPException
 
@@ -26,15 +26,31 @@ class OllamaProvider(LLMProvider):
     # Given a transcription of the session, extract all named entities and objects (people, places, organizations, items) from the transcript.
     # Returns that list of entities.
     async def llm_entity_extraction(self, transcription: str) -> list[dict]:
-        response = ""
-        async for part in await AsyncClient(host=self.model_url).chat(model=self.model_size, messages=[{'role': 'user', 'content': f"Extract all named entities and objects (people, places, organizations, items) from the following transcript. Return ONLY a JSON array of objects, each with 'name', 'type' (character, location, faction, item, or event), and 'description' fields. No other text.\n\n{transcription}"}
-], stream=True):
-            response += part['message']['content']
-        try:
-            return json.loads(response)
-        except json.JSONDecodeError:
-            raise HTTPException(status_code=500, detail="Failed to parse entity extraction response as JSON.")
+        response = await AsyncClient(host=self.model_url).chat(
+        model=self.model_size,
+        messages=[{'role': 'user', 'content': f"""You are a Dungeons and Dragons session analyst. Extract all named entities from the following transcript. Return ONLY a valid JSON array. Each object must have exactly these three fields: - "name": the entity's name as a string - "type": must be exactly one of these values: "Player", "Player Character", "NPC", "Monster", "Location", "Item" - "description": a 1-2 sentence description of the entity based on context from the transcript. Never leave this empty. Rules: - Real player names (people talking) should be type "Player" - Character names should be type "Player Character" or "NPC" depending on context - Return ONLY the JSON array, no other text, no markdown, no explanation Transcript: {transcription}"""}],
+        format='json'
+        )
         
+        raw = response['message']['content']
+        print(f"Raw entity response: {raw}")
+
+        try:
+            parsed = json.loads(raw)
+            if isinstance(parsed, list):
+                return parsed
+            if isinstance(parsed, dict):
+                for val in parsed.values():
+                    if isinstance(val, list):
+                        return val
+                return [parsed]
+            return []
+        except json.JSONDecodeError as e:
+            print(f"JSONDecodeError: {e}")
+            print(f"Raw response was:\n{raw}")
+            return []
+            
+
     # Takes a given entity data and a new summary of the character and requests Ollam to create a new summary for the character.
     async def llm_entity_merging(self, entity_data: str, new_summary:str) -> str:
         response = ""

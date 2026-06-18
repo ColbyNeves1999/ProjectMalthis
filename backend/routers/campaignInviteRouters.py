@@ -26,7 +26,7 @@ async def create_campaign_join_request(campaign_id: uuid.UUID, session: SessionD
 # Get Endpoints
 
 # Endpoint to get information about a campaign invite link
-@router.get("/campaigns/{campaign_id}/inviteLink/")
+@router.get("/campaigns/{campaign_id}/get/inviteLink/")
 async def get_campaign_invite_link(campaign_id: uuid.UUID, session: SessionDep, current_user: User = Depends(current_active_user)) -> CampaignLinkRead:
     return await get_campaign_invite(session, campaign_id)
 
@@ -49,7 +49,7 @@ async def user_get_join_requests_endpoint(campaign_id: uuid.UUID, session: Sessi
 # Patch Endpoints
 
 # Endpoint to update a campaign invite link
-@router.patch("/campaigns/{campaign_id}/inviteLink/")
+@router.patch("/campaigns/{campaign_id}/update/inviteLink/")
 async def update_campaign_invite_link(campaign_id: uuid.UUID, session: SessionDep, update_data: CampaignLinkUpdate, current_user: User = Depends(current_active_user)) -> CampaignLinkRead:
     return await update_invite_link(session, current_user.id, campaign_id, update_data)
 
@@ -62,6 +62,6 @@ async def approve_campaign_join_request(campaign_id: uuid.UUID, session: Session
 # Delete Endpoints
 
 # Endpoint to delete a campaign invite link
-@router.delete("/campaigns/{campaign_id}/inviteLink/")
+@router.delete("/campaigns/{campaign_id}/delete/inviteLink/")
 async def delete_campaign_invite_link(campaign_id: uuid.UUID, session: SessionDep) -> None:
     await delete_invite_link(session, campaign_id)

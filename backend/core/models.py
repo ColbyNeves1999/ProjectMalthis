@@ -129,7 +129,7 @@ class Entities(Base):
     description: Mapped[str | None] = mapped_column(default=None)
     campaign_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("campaigns.id"), nullable=False)
     entity_class: Mapped[entityClassEnum] = mapped_column(Enum(entityClassEnum), nullable=False)
-    first_seen: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("campaigns_sessions.id"), nullable=True)
+    first_seen: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("campaign_sessions.id"), nullable=True)
     aliases: Mapped[list[str] | None] = mapped_column(ARRAY(String), default=None)
     notes: Mapped[str | None] = mapped_column(default=None)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
